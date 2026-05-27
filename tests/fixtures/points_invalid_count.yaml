@@ -1,0 +1,6 @@
+points:
+  bad_point:
+    area: holding_register
+    address: 0
+    count: 0
+    data_type: uint16

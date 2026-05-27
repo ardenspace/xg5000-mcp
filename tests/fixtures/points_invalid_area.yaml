@@ -1,0 +1,7 @@
+points:
+  bad_point:
+    area: output
+    address: 0
+    count: 1
+    data_type: bool
+

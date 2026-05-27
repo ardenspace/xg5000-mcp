@@ -1,0 +1,15 @@
+points:
+  mesh_1_running:
+    area: coil
+    address: 0
+    count: 1
+    data_type: bool
+    description: Mesh conveyor 1 running state
+  mesh_1_speed:
+    area: holding_register
+    address: 100
+    count: 1
+    data_type: uint16
+    scale: 0.1
+    unit: hz
+

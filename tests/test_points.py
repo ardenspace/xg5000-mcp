@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from ls_modbus_mcp.points import (
@@ -8,35 +10,11 @@ from ls_modbus_mcp.points import (
     load_point_map,
 )
 
-
-def write_points(tmp_path, text):
-    path = tmp_path / "points.yaml"
-    path.write_text(text, encoding="utf-8")
-    return path
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def test_load_point_map_lists_named_points(tmp_path):
-    path = write_points(
-        tmp_path,
-        """
-points:
-  mesh_1_running:
-    area: coil
-    address: 0
-    count: 1
-    data_type: bool
-    description: Mesh conveyor 1 running state
-  mesh_1_speed:
-    area: holding_register
-    address: 100
-    count: 1
-    data_type: uint16
-    scale: 0.1
-    unit: hz
-""",
-    )
-
-    point_map = load_point_map(path)
+def test_load_point_map_lists_named_points():
+    point_map = load_point_map(FIXTURES / "points_valid.yaml")
 
     assert point_map.names() == ["mesh_1_running", "mesh_1_speed"]
     assert point_map.get("mesh_1_speed").area == "holding_register"
@@ -44,38 +22,14 @@ points:
     assert point_map.get("mesh_1_speed").scale == 0.1
 
 
-def test_load_point_map_rejects_invalid_area(tmp_path):
-    path = write_points(
-        tmp_path,
-        """
-points:
-  bad_point:
-    area: output
-    address: 0
-    count: 1
-    data_type: bool
-""",
-    )
-
+def test_load_point_map_rejects_invalid_area():
     with pytest.raises(PointConfigError, match="bad_point.*area"):
-        load_point_map(path)
+        load_point_map(FIXTURES / "points_invalid_area.yaml")
 
 
-def test_load_point_map_rejects_invalid_count(tmp_path):
-    path = write_points(
-        tmp_path,
-        """
-points:
-  bad_point:
-    area: holding_register
-    address: 0
-    count: 0
-    data_type: uint16
-""",
-    )
-
+def test_load_point_map_rejects_invalid_count():
     with pytest.raises(PointConfigError, match="bad_point.*count"):
-        load_point_map(path)
+        load_point_map(FIXTURES / "points_invalid_count.yaml")
 
 
 def point(data_type, *, count=1, scale=None):
