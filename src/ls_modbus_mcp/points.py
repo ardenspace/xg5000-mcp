@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import struct
 from typing import Any
 
 import yaml
@@ -12,6 +13,10 @@ SUPPORTED_DATA_TYPES = {"bool", "uint16", "int16", "uint32", "int32", "float32"}
 
 class PointConfigError(ValueError):
     """Raised when a point configuration file is invalid."""
+
+
+class PointDecodeError(ValueError):
+    """Raised when raw Modbus values cannot be decoded for a point."""
 
 
 @dataclass(frozen=True)
@@ -111,3 +116,69 @@ def _require_int(name: str, value: dict[str, Any], field: str) -> int:
     if not isinstance(field_value, int):
         raise PointConfigError(f"{name}: {field} must be an integer")
     return field_value
+
+
+def decode_point_value(point: PointDefinition, raw: list[int] | list[bool]) -> object:
+    if len(raw) != point.count:
+        raise PointDecodeError(
+            f"{point.name}: expected {point.count} raw values, got {len(raw)}"
+        )
+
+    match point.data_type:
+        case "bool":
+            value = _decode_bool(point, raw)
+        case "uint16":
+            value = _decode_uint16(point, raw)
+        case "int16":
+            value = _decode_int16(point, raw)
+        case "uint32":
+            value = _decode_uint32(point, raw)
+        case "int32":
+            value = _decode_int32(point, raw)
+        case "float32":
+            value = _decode_float32(point, raw)
+        case _:
+            raise PointDecodeError(f"{point.name}: unsupported data type {point.data_type}")
+
+    if point.scale is not None and isinstance(value, int | float) and not isinstance(value, bool):
+        return value * point.scale
+    return value
+
+
+def _decode_bool(point: PointDefinition, raw: list[int] | list[bool]) -> bool:
+    _require_decode_count(point, 1)
+    return bool(raw[0])
+
+
+def _decode_uint16(point: PointDefinition, raw: list[int] | list[bool]) -> int:
+    _require_decode_count(point, 1)
+    return int(raw[0]) & 0xFFFF
+
+
+def _decode_int16(point: PointDefinition, raw: list[int] | list[bool]) -> int:
+    value = _decode_uint16(point, raw)
+    return value - 0x10000 if value & 0x8000 else value
+
+
+def _decode_uint32(point: PointDefinition, raw: list[int] | list[bool]) -> int:
+    _require_decode_count(point, 2)
+    high, low = (int(raw[0]) & 0xFFFF, int(raw[1]) & 0xFFFF)
+    return (high << 16) | low
+
+
+def _decode_int32(point: PointDefinition, raw: list[int] | list[bool]) -> int:
+    value = _decode_uint32(point, raw)
+    return value - 0x100000000 if value & 0x80000000 else value
+
+
+def _decode_float32(point: PointDefinition, raw: list[int] | list[bool]) -> float:
+    _require_decode_count(point, 2)
+    registers = (int(raw[0]) & 0xFFFF, int(raw[1]) & 0xFFFF)
+    return struct.unpack(">f", struct.pack(">HH", *registers))[0]
+
+
+def _require_decode_count(point: PointDefinition, expected: int) -> None:
+    if point.count != expected:
+        raise PointDecodeError(
+            f"{point.name}: {point.data_type} requires count {expected}, got {point.count}"
+        )
