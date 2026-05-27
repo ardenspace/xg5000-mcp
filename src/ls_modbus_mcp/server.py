@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import Any
 
 from ls_modbus_mcp.modbus_client import AsyncModbusReader, ModbusSettings
