@@ -51,6 +51,17 @@ Known cabinet/equipment information:
   - Cooling fans
   - Inverters
 
+## Offline Status
+
+The latest available project is:
+
+```text
+D:\Taesung\TaesungProject2
+```
+
+This is enough for offline review, but the raw `.xgwx` file does not provide a reliable plain-text Modbus address map. The next practical work is blocked until someone opens the project in XG5000 and exports or records the communication settings, symbols/device comments, I/O list, and Modbus mapping.
+
+A physical PLC or field machine is not required for that export step. A live PLC is only required later for the Modbus TCP smoke test.
 ## What To Collect From Site
 
 Ask the company/site for these files and values before PLC testing:

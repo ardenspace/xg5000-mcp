@@ -62,6 +62,25 @@ The following are still unknown:
 - Which internal bits/registers represent cylinder open/close sensors.
 - Which registers store inverter speed/fault/running status.
 
+## Current Blocker
+
+The latest project files are available at:
+
+```text
+D:\Taesung\TaesungProject2
+```
+
+That is enough to continue offline preparation, but not enough to create a reliable final `config\points.yaml` from raw file parsing alone.
+
+The next implementation step is blocked until the XG5000 project is opened in XG5000 and the following data is exported or manually recorded:
+
+- XBL-EMTA communication settings.
+- Device comments / symbol list.
+- I/O list.
+- Modbus address mapping between LS devices and Modbus areas/offsets.
+- A small first batch of confirmed safe read-only status points.
+
+No physical field equipment is required for this export step. A live PLC is only required later for smoke testing real values.
 ## Required XG5000 Export/Inspection
 
 Open `TaesungProject2.xgwx` in XG5000 and collect:
