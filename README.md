@@ -36,6 +36,7 @@ Runtime configuration is provided through environment variables:
 | `POINTS_FILE` | no | `config/points.yaml` | Named point mapping file |
 
 Copy `config/points.example.yaml` to `config/points.yaml`, then replace addresses with the actual PLC Modbus map.
+For 32-bit values, `word_order` and `byte_order` default to `big`; set either to `little` only after confirming the LS/XBL-EMTA mapping or device register map.
 
 ```powershell
 Copy-Item config\points.example.yaml config\points.yaml
@@ -84,4 +85,3 @@ Conveyor and cylinder control should be added later as a separate guarded comman
 python -m pytest -v
 python -m ruff check .
 ```
-

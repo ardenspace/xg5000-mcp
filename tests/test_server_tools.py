@@ -62,6 +62,8 @@ def test_list_points_returns_public_point_metadata():
             "scale": None,
             "unit": None,
             "description": "Mesh conveyor 1 running state",
+            "word_order": "big",
+            "byte_order": "big",
         },
         {
             "name": "mesh_1_speed",
@@ -72,6 +74,8 @@ def test_list_points_returns_public_point_metadata():
             "scale": 0.1,
             "unit": "hz",
             "description": "Mesh conveyor 1 speed feedback",
+            "word_order": "big",
+            "byte_order": "big",
         },
     ]
 
@@ -92,6 +96,8 @@ def test_read_point_reads_raw_values_and_decodes_named_point():
         "scale": 0.1,
         "unit": "hz",
         "description": "Mesh conveyor 1 speed feedback",
+        "word_order": "big",
+        "byte_order": "big",
     }
     assert reader.calls == [("holding_register", 100, 1)]
 

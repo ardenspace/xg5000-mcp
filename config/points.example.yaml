@@ -13,10 +13,18 @@ points:
     scale: 0.1
     unit: hz
     description: Mesh conveyor 1 inverter speed feedback
+  inverter_1_frequency_raw:
+    area: holding_register
+    address: 120
+    count: 2
+    data_type: float32
+    word_order: big
+    byte_order: big
+    unit: hz
+    description: Example 32-bit value; confirm word and byte order on site
   cylinder_box_1_opened:
     area: discrete_input
     address: 20
     count: 1
     data_type: bool
     description: Box cylinder 1 open sensor
-

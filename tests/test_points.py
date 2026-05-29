@@ -32,6 +32,11 @@ def test_load_point_map_rejects_invalid_count():
         load_point_map(FIXTURES / "points_invalid_count.yaml")
 
 
+def test_load_point_map_rejects_bool_for_integer_fields():
+    with pytest.raises(PointConfigError, match="bad_point.*address"):
+        load_point_map(FIXTURES / "points_bool_integer.yaml")
+
+
 def point(data_type, *, count=1, scale=None):
     return PointDefinition(
         name="test_point",
@@ -69,6 +74,32 @@ def test_decode_int32_register_pair_twos_complement():
 
 def test_decode_float32_register_pair():
     assert decode_point_value(point("float32", count=2), [0x4120, 0x0000]) == 10.0
+
+
+def test_decode_float32_register_pair_with_little_word_order():
+    little_word_point = PointDefinition(
+        name="test_point",
+        area="holding_register",
+        address=0,
+        count=2,
+        data_type="float32",
+        word_order="little",
+    )
+
+    assert decode_point_value(little_word_point, [0x0000, 0x4120]) == 10.0
+
+
+def test_decode_float32_register_pair_with_little_byte_order():
+    little_byte_point = PointDefinition(
+        name="test_point",
+        area="holding_register",
+        address=0,
+        count=2,
+        data_type="float32",
+        byte_order="little",
+    )
+
+    assert decode_point_value(little_byte_point, [0x2041, 0x0000]) == 10.0
 
 
 def test_decode_rejects_wrong_raw_count():

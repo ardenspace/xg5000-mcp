@@ -168,6 +168,16 @@ points:
     scale: 0.1
     unit: hz
     description: Mesh conveyor 1 inverter speed feedback
+
+  inverter_1_frequency_raw:
+    area: holding_register
+    address: 120
+    count: 2
+    data_type: float32
+    word_order: big
+    byte_order: big
+    unit: hz
+    description: Example 32-bit value; confirm word and byte order on site
 ```
 
 Supported areas:
@@ -185,6 +195,11 @@ Supported data types:
 - `uint32`
 - `int32`
 - `float32`
+
+Optional 32-bit decode order fields:
+
+- `word_order`: `big` or `little`, default `big`
+- `byte_order`: `big` or `little`, default `big`
 
 Address note:
 

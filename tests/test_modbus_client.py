@@ -50,6 +50,22 @@ class FakeClient:
         return self.response
 
 
+class FakeDeviceIdClient:
+    def __init__(self, *, response=None):
+        self.response = response or FakeResponse()
+        self.calls = []
+
+    async def connect(self):
+        return True
+
+    def close(self):
+        pass
+
+    async def read_holding_registers(self, address, *, count, device_id):
+        self.calls.append(("read_holding_registers", address, count, device_id))
+        return self.response
+
+
 def run(coro):
     return asyncio.run(coro)
 
@@ -76,6 +92,14 @@ def test_read_holding_registers_returns_registers():
 
     assert run(reader.read_area("holding_register", address=100, count=2)) == [100, 200]
     assert client.calls == [("read_holding_registers", 100, 2, 1)]
+
+
+def test_read_area_supports_pymodbus_device_id_keyword():
+    client = FakeDeviceIdClient(response=FakeResponse(registers=[100, 200]))
+    reader = AsyncModbusReader(ModbusSettings(host="192.168.0.10", unit_id=7), client=client)
+
+    assert run(reader.read_area("holding_register", address=100, count=2)) == [100, 200]
+    assert client.calls == [("read_holding_registers", 100, 2, 7)]
 
 
 def test_read_input_registers_returns_registers():

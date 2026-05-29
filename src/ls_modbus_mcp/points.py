@@ -9,6 +9,7 @@ import yaml
 
 SUPPORTED_AREAS = {"coil", "discrete_input", "holding_register", "input_register"}
 SUPPORTED_DATA_TYPES = {"bool", "uint16", "int16", "uint32", "int32", "float32"}
+SUPPORTED_ORDERS = {"big", "little"}
 
 
 class PointConfigError(ValueError):
@@ -29,6 +30,8 @@ class PointDefinition:
     scale: float | None = None
     unit: str | None = None
     description: str | None = None
+    word_order: str = "big"
+    byte_order: str = "big"
 
 
 class PointMap:
@@ -81,7 +84,7 @@ def _parse_point(name: str, value: Any) -> PointDefinition:
         raise PointConfigError(f"{name}: count must be greater than or equal to 1")
 
     scale = value.get("scale")
-    if scale is not None and not isinstance(scale, int | float):
+    if scale is not None and (isinstance(scale, bool) or not isinstance(scale, int | float)):
         raise PointConfigError(f"{name}: scale must be a number")
 
     unit = value.get("unit")
@@ -92,6 +95,9 @@ def _parse_point(name: str, value: Any) -> PointDefinition:
     if description is not None and not isinstance(description, str):
         raise PointConfigError(f"{name}: description must be a string")
 
+    word_order = _optional_order(name, value, "word_order")
+    byte_order = _optional_order(name, value, "byte_order")
+
     return PointDefinition(
         name=name,
         area=area,
@@ -101,6 +107,8 @@ def _parse_point(name: str, value: Any) -> PointDefinition:
         scale=float(scale) if scale is not None else None,
         unit=unit,
         description=description,
+        word_order=word_order,
+        byte_order=byte_order,
     )
 
 
@@ -113,8 +121,17 @@ def _require_str(name: str, value: dict[str, Any], field: str) -> str:
 
 def _require_int(name: str, value: dict[str, Any], field: str) -> int:
     field_value = value.get(field)
-    if not isinstance(field_value, int):
+    if isinstance(field_value, bool) or not isinstance(field_value, int):
         raise PointConfigError(f"{name}: {field} must be an integer")
+    return field_value
+
+
+def _optional_order(name: str, value: dict[str, Any], field: str) -> str:
+    field_value = value.get(field, "big")
+    if not isinstance(field_value, str):
+        raise PointConfigError(f"{name}: {field} must be a string")
+    if field_value not in SUPPORTED_ORDERS:
+        raise PointConfigError(f"{name}: {field} must be one of {sorted(SUPPORTED_ORDERS)}")
     return field_value
 
 
@@ -162,8 +179,7 @@ def _decode_int16(point: PointDefinition, raw: list[int] | list[bool]) -> int:
 
 def _decode_uint32(point: PointDefinition, raw: list[int] | list[bool]) -> int:
     _require_decode_count(point, 2)
-    high, low = (int(raw[0]) & 0xFFFF, int(raw[1]) & 0xFFFF)
-    return (high << 16) | low
+    return int.from_bytes(_register_bytes(point, raw), "big")
 
 
 def _decode_int32(point: PointDefinition, raw: list[int] | list[bool]) -> int:
@@ -173,8 +189,7 @@ def _decode_int32(point: PointDefinition, raw: list[int] | list[bool]) -> int:
 
 def _decode_float32(point: PointDefinition, raw: list[int] | list[bool]) -> float:
     _require_decode_count(point, 2)
-    registers = (int(raw[0]) & 0xFFFF, int(raw[1]) & 0xFFFF)
-    return struct.unpack(">f", struct.pack(">HH", *registers))[0]
+    return struct.unpack(">f", _register_bytes(point, raw))[0]
 
 
 def _require_decode_count(point: PointDefinition, expected: int) -> None:
@@ -182,3 +197,12 @@ def _require_decode_count(point: PointDefinition, expected: int) -> None:
         raise PointDecodeError(
             f"{point.name}: {point.data_type} requires count {expected}, got {point.count}"
         )
+
+
+def _register_bytes(point: PointDefinition, raw: list[int] | list[bool]) -> bytes:
+    registers = [int(value) & 0xFFFF for value in raw]
+    if point.word_order == "little":
+        registers = list(reversed(registers))
+
+    byte_order = ">" if point.byte_order == "big" else "<"
+    return b"".join(struct.pack(f"{byte_order}H", register) for register in registers)

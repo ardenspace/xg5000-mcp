@@ -70,11 +70,7 @@ class AsyncModbusReader:
             "input_register": "read_input_registers",
         }[area]
         method = getattr(self._client, method_name)
-        response = await method(
-            address=address,
-            count=count,
-            slave=self.settings.unit_id,
-        )
+        response = await self._call_read_method(method, address=address, count=count)
 
         if response.isError():
             raise ModbusReadError(
@@ -109,3 +105,16 @@ class AsyncModbusReader:
             port=self.settings.port,
             timeout=self.settings.timeout,
         )
+
+    async def _call_read_method(self, method: Any, *, address: int, count: int) -> Any:
+        parameters = inspect.signature(method).parameters
+        unit_keyword = "device_id" if "device_id" in parameters else "slave"
+        kwargs = {
+            "count": count,
+            unit_keyword: self.settings.unit_id,
+        }
+
+        address_parameter = parameters.get("address")
+        if address_parameter and address_parameter.kind is inspect.Parameter.KEYWORD_ONLY:
+            return await method(address=address, **kwargs)
+        return await method(address, **kwargs)

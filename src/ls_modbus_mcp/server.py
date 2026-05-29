@@ -156,6 +156,8 @@ def _point_metadata(point: PointDefinition) -> dict[str, Any]:
         "scale": point.scale,
         "unit": point.unit,
         "description": point.description,
+        "word_order": point.word_order,
+        "byte_order": point.byte_order,
     }
 
 
