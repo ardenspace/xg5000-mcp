@@ -16,6 +16,21 @@ This document is for the on-site step that could **not** be done offline. An age
 | Unit / 국번 (slave id) | `1` |
 | Server mode | 모드버스 서버 (Modbus server) |
 
+## STEP A — Field PC setup (do once, before anything else)
+
+The committed repo already includes the real `config/points.yaml` (96 points), so a fresh clone is ready to use — no copy-from-example needed.
+
+```powershell
+git clone <repo-url> xg5000-mcp
+cd xg5000-mcp
+python -m pip install -e ".[dev]"     # needs Python 3.11+
+```
+
+Caveats:
+- **Offline field PC:** `pip install` pulls `mcp`, `pymodbus`, `pydantic`, `pyyaml` from the internet. If the field network is closed/air-gapped, prepare a `.venv` (or download the wheels) **before** going on site — installing there will otherwise fail.
+- **Python 3.11+** must be installed.
+- **The MCP server is not a standalone app.** `xg5000-mcp` is a stdio MCP server, normally launched by an MCP client (Claude Desktop / Claude Code / etc.). To actually call tools (`read_point`, …) you need an MCP client on the field PC — see the client config JSON in `README.md`. Use the confirmed env values (`PLC_HOST=192.168.240.9`, `PLC_PORT=502`, `PLC_UNIT_ID=1`, `POINTS_FILE=config\points.yaml`).
+
 ## STEP 0 — Download the modified comm parameter to the live PLC (REQUIRED FIRST)
 
 Offline, the `워드 읽기 영역 시작 주소` was changed `P0000 → D00000` so inverter D-words become readable over Modbus. **This only takes effect after downloading parameters to the real PLC.**
@@ -61,7 +76,7 @@ The config assumes Modbus offset `0` = `P0000.0` and register `0` = `D0000`, i.e
 
 ### 4b. Verify input sensors (discrete inputs, P area)
 
-The full point map is in `config/points.yaml` (66 points: 64 discrete inputs + 2 inverter registers). Use `read_point` / `read_points`. Physically trigger a sensor and confirm the read value flips. Spot-check at least: one box-detect, one injection photosensor, one cylinder closed/open pair.
+The full point map is in `config/points.yaml` (96 points: 64 discrete inputs + 32 inverter registers). Use `read_point` / `read_points`. Physically trigger a sensor and confirm the read value flips. Spot-check at least: one box-detect, one injection photosensor, one cylinder closed/open pair.
 
 Note: physical **output solenoids** (`P20~P28`, offsets 32~40) are also read via `read_discrete_inputs` — they live in the bit-read window, so reading them returns the live output state. Do NOT use `read_coils` for them (the bit-write area `P01000` is empty scratch). `1` = solenoid energized.
 
