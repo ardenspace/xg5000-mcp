@@ -20,22 +20,47 @@ points:
 
   # ----------------------------------------------------------------------------
   # Inverter status (D-area words, read_input_registers, base D00000)
-  # Only inverter slave id 1 (D00100 / D00600) is confirmed from the ladder.
-  # Other inverters' D source registers must be read off the P2P block table.
+  # Per the P2P 01 (built-in Cnet, ch2 Modbus RTU client) block table, each
+  # inverter (상대국번 N) is driven by two WRITE blocks:
+  #   start/stop -> inverter reg 0x40005, PLC source D(100 + 2*(N-1))  (1=stop, 2=run)
+  #   frequency  -> inverter reg 0x40004, PLC source D(600 + 2*(N-1))  (0-60 Hz)
+  # We read those PLC source D-words (Modbus input_register addr == D-word number).
+  # 국번 1~6 confirmed from the table/ladder; 7~16 extrapolated by the same +2
+  # step — VERIFY against the full P2P table on site. RS485 max 16 inverters
+  # (17 installed; 1 inverter is manual-control only, no P2P block).
   # ----------------------------------------------------------------------------
-  inverter_1_start_stop_cmd:
-    area: input_register
-    address: 100            # D00100
-    count: 1
-    data_type: uint16
-    description: "Inverter 1 start/stop command value (1=stop, 2=run)"
-  inverter_1_freq_cmd:
-    area: input_register
-    address: 600            # D00600
-    count: 1
-    data_type: uint16
-    unit: hz
-    description: "Inverter 1 output frequency command (0-60)"
+  inverter_1_start_stop_cmd:  { area: input_register, address: 100, count: 1, data_type: uint16, description: "Inverter 1 start/stop (1=stop,2=run) [D00100]" }
+  inverter_1_freq_cmd:        { area: input_register, address: 600, count: 1, data_type: uint16, unit: hz, description: "Inverter 1 output freq 0-60 [D00600]" }
+  inverter_2_start_stop_cmd:  { area: input_register, address: 102, count: 1, data_type: uint16, description: "Inverter 2 start/stop (1=stop,2=run) [D00102]" }
+  inverter_2_freq_cmd:        { area: input_register, address: 602, count: 1, data_type: uint16, unit: hz, description: "Inverter 2 output freq 0-60 [D00602]" }
+  inverter_3_start_stop_cmd:  { area: input_register, address: 104, count: 1, data_type: uint16, description: "Inverter 3 start/stop (1=stop,2=run) [D00104]" }
+  inverter_3_freq_cmd:        { area: input_register, address: 604, count: 1, data_type: uint16, unit: hz, description: "Inverter 3 output freq 0-60 [D00604]" }
+  inverter_4_start_stop_cmd:  { area: input_register, address: 106, count: 1, data_type: uint16, description: "Inverter 4 start/stop (1=stop,2=run) [D00106]" }
+  inverter_4_freq_cmd:        { area: input_register, address: 606, count: 1, data_type: uint16, unit: hz, description: "Inverter 4 output freq 0-60 [D00606]" }
+  inverter_5_start_stop_cmd:  { area: input_register, address: 108, count: 1, data_type: uint16, description: "Inverter 5 start/stop (1=stop,2=run) [D00108]" }
+  inverter_5_freq_cmd:        { area: input_register, address: 608, count: 1, data_type: uint16, unit: hz, description: "Inverter 5 output freq 0-60 [D00608]" }
+  inverter_6_start_stop_cmd:  { area: input_register, address: 110, count: 1, data_type: uint16, description: "Inverter 6 start/stop (1=stop,2=run) [D00110]" }
+  inverter_6_freq_cmd:        { area: input_register, address: 610, count: 1, data_type: uint16, unit: hz, description: "Inverter 6 output freq 0-60 [D00610]" }
+  inverter_7_start_stop_cmd:  { area: input_register, address: 112, count: 1, data_type: uint16, description: "Inverter 7 start/stop (1=stop,2=run) [D00112] — extrapolated, verify" }
+  inverter_7_freq_cmd:        { area: input_register, address: 612, count: 1, data_type: uint16, unit: hz, description: "Inverter 7 output freq 0-60 [D00612] — extrapolated, verify" }
+  inverter_8_start_stop_cmd:  { area: input_register, address: 114, count: 1, data_type: uint16, description: "Inverter 8 start/stop (1=stop,2=run) [D00114] — extrapolated, verify" }
+  inverter_8_freq_cmd:        { area: input_register, address: 614, count: 1, data_type: uint16, unit: hz, description: "Inverter 8 output freq 0-60 [D00614] — extrapolated, verify" }
+  inverter_9_start_stop_cmd:  { area: input_register, address: 116, count: 1, data_type: uint16, description: "Inverter 9 start/stop (1=stop,2=run) [D00116] — extrapolated, verify" }
+  inverter_9_freq_cmd:        { area: input_register, address: 616, count: 1, data_type: uint16, unit: hz, description: "Inverter 9 output freq 0-60 [D00616] — extrapolated, verify" }
+  inverter_10_start_stop_cmd: { area: input_register, address: 118, count: 1, data_type: uint16, description: "Inverter 10 start/stop (1=stop,2=run) [D00118] — extrapolated, verify" }
+  inverter_10_freq_cmd:       { area: input_register, address: 618, count: 1, data_type: uint16, unit: hz, description: "Inverter 10 output freq 0-60 [D00618] — extrapolated, verify" }
+  inverter_11_start_stop_cmd: { area: input_register, address: 120, count: 1, data_type: uint16, description: "Inverter 11 start/stop (1=stop,2=run) [D00120] — extrapolated, verify" }
+  inverter_11_freq_cmd:       { area: input_register, address: 620, count: 1, data_type: uint16, unit: hz, description: "Inverter 11 output freq 0-60 [D00620] — extrapolated, verify" }
+  inverter_12_start_stop_cmd: { area: input_register, address: 122, count: 1, data_type: uint16, description: "Inverter 12 start/stop (1=stop,2=run) [D00122] — extrapolated, verify" }
+  inverter_12_freq_cmd:       { area: input_register, address: 622, count: 1, data_type: uint16, unit: hz, description: "Inverter 12 output freq 0-60 [D00622] — extrapolated, verify" }
+  inverter_13_start_stop_cmd: { area: input_register, address: 124, count: 1, data_type: uint16, description: "Inverter 13 start/stop (1=stop,2=run) [D00124] — extrapolated, verify" }
+  inverter_13_freq_cmd:       { area: input_register, address: 624, count: 1, data_type: uint16, unit: hz, description: "Inverter 13 output freq 0-60 [D00624] — extrapolated, verify" }
+  inverter_14_start_stop_cmd: { area: input_register, address: 126, count: 1, data_type: uint16, description: "Inverter 14 start/stop (1=stop,2=run) [D00126] — extrapolated, verify" }
+  inverter_14_freq_cmd:       { area: input_register, address: 626, count: 1, data_type: uint16, unit: hz, description: "Inverter 14 output freq 0-60 [D00626] — extrapolated, verify" }
+  inverter_15_start_stop_cmd: { area: input_register, address: 128, count: 1, data_type: uint16, description: "Inverter 15 start/stop (1=stop,2=run) [D00128] — extrapolated, verify" }
+  inverter_15_freq_cmd:       { area: input_register, address: 628, count: 1, data_type: uint16, unit: hz, description: "Inverter 15 output freq 0-60 [D00628] — extrapolated, verify" }
+  inverter_16_start_stop_cmd: { area: input_register, address: 130, count: 1, data_type: uint16, description: "Inverter 16 start/stop (1=stop,2=run) [D00130] — extrapolated, verify" }
+  inverter_16_freq_cmd:       { area: input_register, address: 630, count: 1, data_type: uint16, unit: hz, description: "Inverter 16 output freq 0-60 [D00630] — extrapolated, verify" }
 
   # ----------------------------------------------------------------------------
   # Box detection photosensors (P02~P04 -> offset 2~4)
