@@ -1,0 +1,175 @@
+# Taesung cabinet — XG5000 PLC (XBC-DR64H) Modbus TCP point map
+#
+# Source: PLC author's hardware doc + I/O mapping table + XG5000 Modbus server
+# settings, reviewed 2026-06-05. See docs/FIELD-COMMISSIONING.md.
+#
+# ADDRESSING MODEL (LS XBL-EMTA Modbus server, base-address + offset):
+#   - 비트 읽기 영역 시작 = P00000  -> ALL physical P-area I/O (inputs AND outputs)
+#       read via `read_discrete_inputs` (FC02). offset = P_word * 16 + P_bit(hex).
+#       NOTE: physical outputs (P20~P28, words 2) sit inside this read window, so
+#       output states are read as discrete inputs too — NOT via read_coils.
+#       (비트 쓰기 영역 P01000 is an empty scratch area; read_coils is meaningless.)
+#   - 워드 읽기 영역 시작 = D00000 -> D-area words read via `read_input_registers`
+#       (FC04). Modbus register N = D-word N (1:1).
+#
+# ⚠️ VERIFY ON SITE: assumes 0-based offsets (Modbus offset 0 == P0000.0 /
+#    register 0 == D0000). LS firmware has shifted 0-based<->1-based before.
+#    Do a physical toggle test before trusting values (see FIELD-COMMISSIONING.md).
+
+points:
+
+  # ----------------------------------------------------------------------------
+  # Inverter status (D-area words, read_input_registers, base D00000)
+  # Only inverter slave id 1 (D00100 / D00600) is confirmed from the ladder.
+  # Other inverters' D source registers must be read off the P2P block table.
+  # ----------------------------------------------------------------------------
+  inverter_1_start_stop_cmd:
+    area: input_register
+    address: 100            # D00100
+    count: 1
+    data_type: uint16
+    description: "Inverter 1 start/stop command value (1=stop, 2=run)"
+  inverter_1_freq_cmd:
+    area: input_register
+    address: 600            # D00600
+    count: 1
+    data_type: uint16
+    unit: hz
+    description: "Inverter 1 output frequency command (0-60)"
+
+  # ----------------------------------------------------------------------------
+  # Box detection photosensors (P02~P04 -> offset 2~4)
+  # ----------------------------------------------------------------------------
+  box_1_detect:
+    area: discrete_input
+    address: 2              # P02
+    count: 1
+    data_type: bool
+    description: "Box 1 detect (1번 박스)"
+  box_2_detect:
+    area: discrete_input
+    address: 3              # P03
+    count: 1
+    data_type: bool
+    description: "Box 2 detect (2번 박스)"
+  box_spare_detect:
+    area: discrete_input
+    address: 4              # P04
+    count: 1
+    data_type: bool
+    description: "Spare box detect (예비용 박스, 다음 사이클 대기)"
+
+  # ----------------------------------------------------------------------------
+  # Box-full detection sensors (P05~P08 -> offset 5~8)
+  # ⚠️ P06/P07/P08 (offset 6/7/8) are TEMPORARY due to a missing label printer.
+  #    Per the I/O map they move to P85/P86/P87 (offset 133/134/135) later.
+  #    Re-confirm live addresses on site.
+  # ----------------------------------------------------------------------------
+  box_full_1:
+    area: discrete_input
+    address: 5              # P05
+    count: 1
+    data_type: bool
+    description: "Box-full sensor 1"
+  box_full_2:
+    area: discrete_input
+    address: 6              # P06 (TEMPORARY -> future P85 / offset 133)
+    count: 1
+    data_type: bool
+    description: "Box-full sensor 2 — TEMP address, verify (future P85)"
+  box_full_3:
+    area: discrete_input
+    address: 7              # P07 (TEMPORARY -> future P86 / offset 134)
+    count: 1
+    data_type: bool
+    description: "Box-full sensor 3 — TEMP address, verify (future P86)"
+  box_full_4:
+    area: discrete_input
+    address: 8              # P08 (TEMPORARY -> future P87 / offset 135)
+    count: 1
+    data_type: bool
+    description: "Box-full sensor 4 — TEMP address, verify (future P87)"
+
+  # ----------------------------------------------------------------------------
+  # Injection-product photosensors — 5 groups (호기) x 6 sensors = 30
+  #   group1 P15~P1A (21~26), group2 P1B~P1F+P40 (27~31,64),
+  #   group3 P41~P46 (65~70), group4 P47~P4C (71~76), group5 P4D~P52 (77~82)
+  # ----------------------------------------------------------------------------
+  injection_1_photo_1: { area: discrete_input, address: 21, count: 1, data_type: bool, description: "Injection group 1 photosensor 1 (P15)" }
+  injection_1_photo_2: { area: discrete_input, address: 22, count: 1, data_type: bool, description: "Injection group 1 photosensor 2 (P16)" }
+  injection_1_photo_3: { area: discrete_input, address: 23, count: 1, data_type: bool, description: "Injection group 1 photosensor 3 (P17)" }
+  injection_1_photo_4: { area: discrete_input, address: 24, count: 1, data_type: bool, description: "Injection group 1 photosensor 4 (P18)" }
+  injection_1_photo_5: { area: discrete_input, address: 25, count: 1, data_type: bool, description: "Injection group 1 photosensor 5 (P19)" }
+  injection_1_photo_6: { area: discrete_input, address: 26, count: 1, data_type: bool, description: "Injection group 1 photosensor 6 (P1A)" }
+  injection_2_photo_1: { area: discrete_input, address: 27, count: 1, data_type: bool, description: "Injection group 2 photosensor 1 (P1B)" }
+  injection_2_photo_2: { area: discrete_input, address: 28, count: 1, data_type: bool, description: "Injection group 2 photosensor 2 (P1C)" }
+  injection_2_photo_3: { area: discrete_input, address: 29, count: 1, data_type: bool, description: "Injection group 2 photosensor 3 (P1D)" }
+  injection_2_photo_4: { area: discrete_input, address: 30, count: 1, data_type: bool, description: "Injection group 2 photosensor 4 (P1E)" }
+  injection_2_photo_5: { area: discrete_input, address: 31, count: 1, data_type: bool, description: "Injection group 2 photosensor 5 (P1F)" }
+  injection_2_photo_6: { area: discrete_input, address: 64, count: 1, data_type: bool, description: "Injection group 2 photosensor 6 (P40)" }
+  injection_3_photo_1: { area: discrete_input, address: 65, count: 1, data_type: bool, description: "Injection group 3 photosensor 1 (P41)" }
+  injection_3_photo_2: { area: discrete_input, address: 66, count: 1, data_type: bool, description: "Injection group 3 photosensor 2 (P42)" }
+  injection_3_photo_3: { area: discrete_input, address: 67, count: 1, data_type: bool, description: "Injection group 3 photosensor 3 (P43)" }
+  injection_3_photo_4: { area: discrete_input, address: 68, count: 1, data_type: bool, description: "Injection group 3 photosensor 4 (P44)" }
+  injection_3_photo_5: { area: discrete_input, address: 69, count: 1, data_type: bool, description: "Injection group 3 photosensor 5 (P45)" }
+  injection_3_photo_6: { area: discrete_input, address: 70, count: 1, data_type: bool, description: "Injection group 3 photosensor 6 (P46)" }
+  injection_4_photo_1: { area: discrete_input, address: 71, count: 1, data_type: bool, description: "Injection group 4 photosensor 1 (P47)" }
+  injection_4_photo_2: { area: discrete_input, address: 72, count: 1, data_type: bool, description: "Injection group 4 photosensor 2 (P48)" }
+  injection_4_photo_3: { area: discrete_input, address: 73, count: 1, data_type: bool, description: "Injection group 4 photosensor 3 (P49)" }
+  injection_4_photo_4: { area: discrete_input, address: 74, count: 1, data_type: bool, description: "Injection group 4 photosensor 4 (P4A)" }
+  injection_4_photo_5: { area: discrete_input, address: 75, count: 1, data_type: bool, description: "Injection group 4 photosensor 5 (P4B)" }
+  injection_4_photo_6: { area: discrete_input, address: 76, count: 1, data_type: bool, description: "Injection group 4 photosensor 6 (P4C)" }
+  injection_5_photo_1: { area: discrete_input, address: 77, count: 1, data_type: bool, description: "Injection group 5 photosensor 1 (P4D)" }
+  injection_5_photo_2: { area: discrete_input, address: 78, count: 1, data_type: bool, description: "Injection group 5 photosensor 2 (P4E)" }
+  injection_5_photo_3: { area: discrete_input, address: 79, count: 1, data_type: bool, description: "Injection group 5 photosensor 3 (P4F)" }
+  injection_5_photo_4: { area: discrete_input, address: 80, count: 1, data_type: bool, description: "Injection group 5 photosensor 4 (P50)" }
+  injection_5_photo_5: { area: discrete_input, address: 81, count: 1, data_type: bool, description: "Injection group 5 photosensor 5 (P51)" }
+  injection_5_photo_6: { area: discrete_input, address: 82, count: 1, data_type: bool, description: "Injection group 5 photosensor 6 (P52)" }
+
+  # ----------------------------------------------------------------------------
+  # Injection-product cylinder sensors — 5 cylinders x (closed/open) = 10
+  #   P53~P5C (offset 83~92). No '-2' = closed-detect (ON when cylinder closes),
+  #   '-2' = open-detect (ON when cylinder open).
+  # ----------------------------------------------------------------------------
+  injection_cyl_1_closed: { area: discrete_input, address: 83, count: 1, data_type: bool, description: "Injection cylinder 1 closed sensor (P53, DI51)" }
+  injection_cyl_1_open:   { area: discrete_input, address: 84, count: 1, data_type: bool, description: "Injection cylinder 1 open sensor (P54, DI51-2)" }
+  injection_cyl_2_closed: { area: discrete_input, address: 85, count: 1, data_type: bool, description: "Injection cylinder 2 closed sensor (P55, DI52)" }
+  injection_cyl_2_open:   { area: discrete_input, address: 86, count: 1, data_type: bool, description: "Injection cylinder 2 open sensor (P56, DI52-2)" }
+  injection_cyl_3_closed: { area: discrete_input, address: 87, count: 1, data_type: bool, description: "Injection cylinder 3 closed sensor (P57, DI53)" }
+  injection_cyl_3_open:   { area: discrete_input, address: 88, count: 1, data_type: bool, description: "Injection cylinder 3 open sensor (P58, DI53-2)" }
+  injection_cyl_4_closed: { area: discrete_input, address: 89, count: 1, data_type: bool, description: "Injection cylinder 4 closed sensor (P59, DI54)" }
+  injection_cyl_4_open:   { area: discrete_input, address: 90, count: 1, data_type: bool, description: "Injection cylinder 4 open sensor (P5A, DI54-2)" }
+  injection_cyl_5_closed: { area: discrete_input, address: 91, count: 1, data_type: bool, description: "Injection cylinder 5 closed sensor (P5B, DI55)" }
+  injection_cyl_5_open:   { area: discrete_input, address: 92, count: 1, data_type: bool, description: "Injection cylinder 5 open sensor (P5C, DI55-2)" }
+
+  # ----------------------------------------------------------------------------
+  # Box cylinder sensors — 3 cylinders x (closed/open) = 6
+  #   P5D~P5F (93~95), P80~P82 (128~130). Front = closed-detect, back = open-detect.
+  # ----------------------------------------------------------------------------
+  box_cyl_1_closed: { area: discrete_input, address: 93,  count: 1, data_type: bool, description: "Box cylinder 1 closed sensor (P5D, DI56)" }
+  box_cyl_1_open:   { area: discrete_input, address: 94,  count: 1, data_type: bool, description: "Box cylinder 1 open sensor (P5E, DI57)" }
+  box_cyl_2_closed: { area: discrete_input, address: 95,  count: 1, data_type: bool, description: "Box cylinder 2 closed sensor (P5F, DI58)" }
+  box_cyl_2_open:   { area: discrete_input, address: 128, count: 1, data_type: bool, description: "Box cylinder 2 open sensor (P80, DI59)" }
+  box_cyl_3_closed: { area: discrete_input, address: 129, count: 1, data_type: bool, description: "Box cylinder 3 closed sensor (P81, DI60)" }
+  box_cyl_3_open:   { area: discrete_input, address: 130, count: 1, data_type: bool, description: "Box cylinder 3 open sensor (P82, DI61)" }
+
+  # ----------------------------------------------------------------------------
+  # Box-full cylinder sensor — 1 cylinder x (closed/open) = 2  (P83/P84, 131/132)
+  # ----------------------------------------------------------------------------
+  box_full_cyl_closed: { area: discrete_input, address: 131, count: 1, data_type: bool, description: "Box-full cylinder closed sensor (P83, DI62)" }
+  box_full_cyl_open:   { area: discrete_input, address: 132, count: 1, data_type: bool, description: "Box-full cylinder open sensor (P84, DI63)" }
+
+  # ----------------------------------------------------------------------------
+  # Output solenoid states (physical outputs in P-area word 2, P20~P28).
+  # Read as discrete inputs (offset 32~40) — these are OUTPUT STATE reads only,
+  # the MCP does not and must not command them. 1 = solenoid energized.
+  # ----------------------------------------------------------------------------
+  injection_align_sol_1: { area: discrete_input, address: 32, count: 1, data_type: bool, description: "Injection align solenoid 1 (탑체인1) output state (P20, DO01)" }
+  injection_align_sol_2: { area: discrete_input, address: 33, count: 1, data_type: bool, description: "Injection align solenoid 2 (탑체인2) output state (P21, DO02)" }
+  injection_align_sol_3: { area: discrete_input, address: 34, count: 1, data_type: bool, description: "Injection align solenoid 3 (탑체인3) output state (P22, DO03)" }
+  injection_align_sol_4: { area: discrete_input, address: 35, count: 1, data_type: bool, description: "Injection align solenoid 4 (탑체인4) output state (P23, DO04)" }
+  injection_align_sol_5: { area: discrete_input, address: 36, count: 1, data_type: bool, description: "Injection align solenoid 5 (탑체인5) output state (P24, DO05)" }
+  box_align_sol_1:       { area: discrete_input, address: 37, count: 1, data_type: bool, description: "Box align solenoid 1 output state (P25, DO06)" }
+  box_align_sol_2:       { area: discrete_input, address: 38, count: 1, data_type: bool, description: "Box align solenoid 2 output state (P26, DO07)" }
+  box_align_sol_spare:   { area: discrete_input, address: 39, count: 1, data_type: bool, description: "Box align solenoid spare output state (P27, DO08)" }
+  box_full_stop_sol:     { area: discrete_input, address: 40, count: 1, data_type: bool, description: "Box-full stop solenoid output state (P28, DO09)" }
